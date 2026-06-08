@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="NCL Deals"/>
+<meta name="theme-color" content="#0f0f1a"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<title>NCL Deals</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --purple:#7c3aed;--pink:#db2777;--teal:#0891b2;--green:#16a34a;--amber:#ca8a04;--red:#dc2626;
+  --bg:#0f0f1a;--surface:#1a1a2e;--card:#22223b;--border:rgba(255,255,255,0.08);
+  --text:#f1f0fb;--muted:#9ca3af;
+  --radius:14px;--radius-sm:8px;--radius-lg:20px;
+  --safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);
+  --safe-left:env(safe-area-inset-left,0px);--safe-right:env(safe-area-inset-right,0px);
+  --tab-height:64px;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',sans-serif;color:var(--text);overscroll-behavior:none;}
+#app{display:flex;flex-direction:column;height:100dvh;height:100vh;}
+#status-bar{height:var(--safe-top);background:var(--bg);flex-shrink:0;}
+#header{flex-shrink:0;background:var(--bg);border-bottom:0.5px solid var(--border);padding:12px max(16px,var(--safe-left)) 12px max(16px,var(--safe-right));}
+#scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:16px max(16px,var(--safe-left)) 16px max(16px,var(--safe-right));padding-bottom:calc(var(--tab-height) + var(--safe-bottom) + 140px);}
+#tab-bar{position:fixed;bottom:0;left:0;right:0;height:calc(var(--tab-height) + var(--safe-bottom));background:rgba(15,15,26,0.95);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-top:0.5px solid var(--border);display:flex;align-items:flex-start;padding-bottom:var(--safe-bottom);}
+.header-inner{display:flex;align-items:center;justify-content:space-between;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--purple),var(--pink));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.logo-text{font-size:17px;font-weight:700;letter-spacing:-.3px;}
+.logo-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.time-badge{font-size:12px;font-weight:600;color:var(--muted);background:var(--surface);padding:5px 10px;border-radius:20px;border:0.5px solid var(--border);}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;color:var(--muted);cursor:pointer;padding:8px 0 0;font-family:inherit;position:relative;}
+.tab.active{color:var(--purple);}
+.tab-icon{font-size:20px;line-height:1;}
+.tab-label{font-size:9px;font-weight:500;}
+.tab-badge{position:absolute;top:5px;right:calc(50% - 18px);background:var(--pink);color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:8px;min-width:14px;text-align:center;}
+/* tonight banner */
+.tonight-banner{position:relative;border-radius:var(--radius-lg);overflow:hidden;margin-bottom:16px;}
+.banner-bg{position:absolute;inset:0;}
+.banner-content{position:relative;padding:20px 20px 18px;}
+.banner-eyebrow{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,0.65);margin-bottom:6px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.banner-dot{width:6px;height:6px;border-radius:50%;background:#fff;flex-shrink:0;animation:pulse 1.8s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.8);}}
+.banner-venue{font-size:24px;font-weight:800;letter-spacing:-.5px;color:#fff;margin-bottom:4px;line-height:1.1;}
+.banner-deal{font-size:15px;color:rgba(255,255,255,0.88);margin-bottom:12px;line-height:1.4;}
+.banner-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.banner-tag{font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,0.18);color:#fff;}
+.banner-time,.banner-area{font-size:12px;color:rgba(255,255,255,0.65);}
+.verified-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(22,163,74,0.25);color:#4ade80;border:0.5px solid rgba(74,222,128,0.3);}
+.banner-source{font-size:10px;color:rgba(255,255,255,0.4);margin-top:10px;}
+.banner-share-btn{margin-top:12px;padding:8px 16px;border-radius:20px;border:0.5px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.12);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+/* day strip */
+.section-label{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.day-strip{display:flex;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:16px;padding:0 max(16px,var(--safe-left));margin-left:calc(-1 * max(16px,var(--safe-left)));margin-right:calc(-1 * max(16px,var(--safe-right)));}
+.day-strip::-webkit-scrollbar{display:none;}
+.day-btn{flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:9px 14px;border-radius:12px;border:none;cursor:pointer;background:var(--surface);position:relative;font-family:inherit;}
+.day-btn:active{transform:scale(.94);}
+.day-btn.selected{background:var(--purple);}
+.day-btn.today::after{content:'';position:absolute;bottom:5px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.5);}
+.day-name{font-size:13px;font-weight:600;color:var(--text);}
+.day-btn.selected .day-name{color:#fff;}
+.day-count{font-size:10px;margin-top:2px;color:var(--muted);font-weight:500;}
+.day-btn.selected .day-count{color:rgba(255,255,255,0.7);}
+/* filters */
+.filters{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;scrollbar-width:none;}
+.filters::-webkit-scrollbar{display:none;}
+.filter-pill{flex-shrink:0;padding:7px 14px;border-radius:20px;border:0.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;}
+.filter-pill.active{background:var(--purple);color:#fff;border-color:var(--purple);}
+.filter-pill:active{transform:scale(.95);}
+/* deal cards */
+.deals-grid{display:flex;flex-direction:column;gap:10px;}
+.deal-card{background:var(--card);border-radius:var(--radius);border:0.5px solid var(--border);overflow:hidden;cursor:pointer;}
+.deal-card:active{transform:scale(.985);}
+.deal-accent{height:4px;}
+.deal-body{padding:14px 16px 14px;}
+.deal-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.deal-venue{font-size:16px;font-weight:700;letter-spacing:-.2px;}
+.deal-subtitle{font-size:12px;color:var(--muted);margin-top:2px;}
+.deal-tag{font-size:11px;font-weight:700;padding:4px 9px;border-radius:20px;white-space:nowrap;margin-left:10px;flex-shrink:0;}
+.deal-desc{font-size:14px;color:rgba(241,240,251,0.9);line-height:1.45;margin-bottom:8px;}
+.deal-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;}
+.deal-time{font-size:12px;color:var(--muted);}
+.deal-days{display:flex;gap:4px;flex-wrap:wrap;}
+.deal-day-pill{font-size:10px;font-weight:600;padding:3px 7px;border-radius:6px;background:var(--surface);}
+.deal-day-pill.current{color:#fff;}
+.deal-verified{font-size:10px;color:#4ade80;margin-top:6px;}
+.deal-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);}
+.deal-action-btn{flex:1;padding:7px;border-radius:8px;border:0.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;}
+.deal-action-btn.upvoted{background:rgba(124,58,237,0.15);color:var(--purple);border-color:var(--purple);}
+.deal-action-btn:active{transform:scale(.95);}
+.upvote-count{font-size:11px;font-weight:700;}
+/* empty / loading */
+.empty-state{text-align:center;padding:48px 16px;}
+.empty-emoji{font-size:44px;display:block;margin-bottom:12px;}
+.empty-title{font-size:16px;font-weight:600;color:var(--muted);}
+.empty-sub{font-size:13px;color:rgba(156,163,175,.6);margin-top:4px;}
+.loading-pulse{display:flex;flex-direction:column;gap:10px;}
+.skeleton{background:var(--surface);border-radius:var(--radius);height:120px;animation:shimmer 1.4s infinite;}
+@keyframes shimmer{0%,100%{opacity:.4;}50%{opacity:.8;}}
+/* results bar */
+.results-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.results-count{font-size:13px;color:var(--muted);}
+.full-day{font-size:13px;font-weight:600;}
+/* install prompt */
+.install-bar{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.install-icon{font-size:26px;flex-shrink:0;}
+.install-text{flex:1;}
+.install-title{font-size:13px;font-weight:700;}
+.install-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.install-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px;line-height:1;}
+/* pages */
+.page{display:none;}
+.page.active{display:block;}
+/* ── VENUE PAGE ── */
+.back-btn{display:flex;align-items:center;gap:8px;background:none;border:none;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;padding:0;font-family:inherit;margin-bottom:16px;}
+.venue-hero{border-radius:var(--radius-lg);overflow:hidden;margin-bottom:16px;position:relative;}
+.venue-hero-bg{height:120px;}
+.venue-hero-body{background:var(--card);padding:16px;}
+.venue-hero-name{font-size:22px;font-weight:800;letter-spacing:-.4px;margin-bottom:4px;}
+.venue-hero-meta{font-size:13px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;}
+.venue-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;}
+.venue-stat{background:var(--card);border-radius:var(--radius-sm);padding:12px;text-align:center;border:0.5px solid var(--border);}
+.venue-stat-num{font-size:20px;font-weight:800;color:var(--purple);}
+.venue-stat-label{font-size:11px;color:var(--muted);margin-top:2px;}
+/* ── MAP PAGE ── */
+.map-container{border-radius:var(--radius-lg);overflow:hidden;margin-bottom:16px;border:0.5px solid var(--border);}
+#map-iframe{width:100%;height:340px;border:none;display:block;}
+.map-venue-list{display:flex;flex-direction:column;gap:8px;}
+.map-venue-card{background:var(--card);border-radius:var(--radius);border:0.5px solid var(--border);padding:12px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;}
+.map-venue-card:active{transform:scale(.98);}
+.map-venue-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.map-venue-name{font-size:14px;font-weight:600;flex:1;}
+.map-venue-area{font-size:11px;color:var(--muted);}
+.map-venue-count{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--surface);color:var(--muted);}
+/* ── SUBMIT PAGE ── */
+.submit-hero{background:var(--surface);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;text-align:center;border:0.5px solid var(--border);}
+.submit-hero-icon{font-size:36px;margin-bottom:8px;}
+.submit-hero-title{font-size:18px;font-weight:800;margin-bottom:4px;}
+.submit-hero-sub{font-size:13px;color:var(--muted);line-height:1.5;}
+.form-card{background:var(--card);border-radius:var(--radius);border:0.5px solid var(--border);padding:16px;margin-bottom:12px;}
+.form-section-title{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:12px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-full{grid-column:1/-1;}
+.form-label{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;display:block;margin-bottom:5px;}
+.form-input,.form-select,.form-textarea{width:100%;padding:11px 13px;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:var(--surface);color:var(--text);font-size:15px;font-family:inherit;outline:none;-webkit-appearance:none;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--purple);}
+.form-textarea{resize:none;height:80px;line-height:1.5;}
+.form-select{background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 7L11 1' stroke='%239ca3af' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+.day-toggles{display:flex;gap:6px;flex-wrap:wrap;}
+.day-toggle{padding:8px 13px;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;min-height:44px;}
+.day-toggle.on{background:var(--purple);color:#fff;border-color:var(--purple);}
+.day-toggle:active{transform:scale(.93);}
+.submit-btn{width:100%;padding:15px;border-radius:var(--radius);border:none;background:var(--purple);color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;min-height:50px;margin-top:4px;}
+.submit-btn:active{transform:scale(.98);}
+.submit-btn:disabled{opacity:.5;}
+.success-card{background:rgba(22,163,74,0.12);border:0.5px solid rgba(74,222,128,0.3);border-radius:var(--radius-lg);padding:24px;text-align:center;margin-top:8px;}
+.success-icon{font-size:40px;display:block;margin-bottom:10px;}
+.success-title{font-size:17px;font-weight:800;color:#4ade80;margin-bottom:6px;}
+.success-sub{font-size:13px;color:var(--muted);line-height:1.5;}
+/* ── ADMIN PAGE ── */
+.admin-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.admin-title{font-size:20px;font-weight:700;}
+.admin-sub{font-size:13px;color:var(--muted);margin-top:2px;}
+.login-card{background:var(--card);border-radius:var(--radius-lg);padding:24px;margin-bottom:16px;border:0.5px solid var(--border);}
+.login-title{font-size:17px;font-weight:700;margin-bottom:4px;}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:16px;}
+.login-btn{width:100%;padding:13px;border-radius:var(--radius-sm);border:none;background:var(--purple);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;min-height:44px;}
+.logout-btn{padding:7px 12px;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.admin-tabs{display:flex;background:var(--surface);border-radius:var(--radius-sm);padding:3px;gap:2px;margin-bottom:16px;border:0.5px solid var(--border);}
+.admin-tab{flex:1;padding:8px;border-radius:6px;border:none;background:transparent;color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;position:relative;}
+.admin-tab.active{background:var(--purple);color:#fff;}
+.admin-tab .badge{position:absolute;top:4px;right:8px;background:var(--pink);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px;}
+.pending-card{background:var(--card);border-radius:var(--radius);border:0.5px solid rgba(251,191,36,0.25);padding:14px;margin-bottom:8px;}
+.pending-venue{font-size:15px;font-weight:700;margin-bottom:2px;}
+.pending-deal{font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.4;}
+.pending-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.pending-chip{font-size:11px;padding:3px 8px;border-radius:6px;background:var(--surface);color:var(--muted);}
+.pending-actions{display:flex;gap:8px;}
+.approve-btn{flex:1;padding:10px;border-radius:var(--radius-sm);background:rgba(22,163,74,0.15);color:#4ade80;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:0.5px solid rgba(74,222,128,0.3);min-height:44px;}
+.reject-btn{flex:1;padding:10px;border-radius:var(--radius-sm);background:rgba(220,38,38,0.1);color:var(--red);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;border:0.5px solid rgba(220,38,38,0.25);min-height:44px;}
+.approve-btn:active,.reject-btn:active{transform:scale(.96);}
+.admin-list{display:flex;flex-direction:column;gap:8px;}
+.admin-row{background:var(--card);border-radius:var(--radius);border:0.5px solid var(--border);padding:13px 13px 13px 12px;display:flex;align-items:center;gap:12px;}
+.admin-accent{width:4px;border-radius:3px;align-self:stretch;flex-shrink:0;}
+.admin-info{flex:1;min-width:0;}
+.admin-venue-name{font-size:14px;font-weight:700;}
+.admin-deal-text{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.admin-days-row{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;}
+.admin-day-chip{font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;background:var(--surface);color:var(--muted);}
+.admin-btns{display:flex;gap:6px;flex-shrink:0;}
+.edit-btn{padding:7px 12px;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;min-height:36px;}
+.delete-btn{padding:7px 12px;border-radius:var(--radius-sm);border:0.5px solid rgba(220,38,38,0.35);background:transparent;color:var(--red);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;min-height:36px;}
+.edit-btn:active,.delete-btn:active{transform:scale(.92);}
+.admin-form-card{background:var(--card);border-radius:var(--radius);border:1.5px solid var(--purple);padding:16px;margin-bottom:12px;}
+.color-swatches{display:flex;gap:8px;flex-wrap:wrap;}
+.swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;}
+.swatch.active{border-color:#fff;}
+.form-actions{display:flex;gap:8px;margin-top:14px;}
+.save-btn{flex:1;padding:13px;border-radius:var(--radius-sm);border:none;background:var(--purple);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;min-height:44px;}
+.save-btn:disabled{opacity:.5;}
+.cancel-btn{padding:13px 18px;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:transparent;color:var(--muted);font-size:15px;cursor:pointer;font-family:inherit;min-height:44px;}
+/* notifications banner */
+.notif-banner{background:var(--surface);border-radius:var(--radius);border:0.5px solid rgba(124,58,237,0.3);padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.notif-text{flex:1;font-size:13px;color:var(--muted);line-height:1.4;}
+.notif-btn{padding:7px 14px;border-radius:20px;border:none;background:var(--purple);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;}
+.notif-close{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:2px;}
+/* modal overlay */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:flex-end;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal-sheet{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 0 calc(20px + var(--safe-bottom));}
+.modal-handle{width:36px;height:4px;border-radius:2px;background:var(--border);margin:12px auto 0;}
+.modal-header{padding:16px 20px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid var(--border);}
+.modal-title{font-size:17px;font-weight:700;}
+.modal-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:4px;line-height:1;}
+.modal-body{padding:16px 20px;}
+/* share sheet */
+.share-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:8px;}
+.share-btn{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;background:none;border:none;font-family:inherit;}
+.share-btn:active{transform:scale(.9);}
+.share-icon{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px;}
+.share-label{font-size:11px;color:var(--muted);font-weight:500;}
+/* toast */
+.toast{position:fixed;top:calc(var(--safe-top) + 60px);left:16px;right:16px;z-index:999;background:#1e1e2e;border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;font-weight:500;display:none;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+.toast.show{display:block;animation:slideDown .25s ease;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+.setup-warning{background:rgba(202,138,4,0.1);border:0.5px solid rgba(202,138,4,0.3);border-radius:var(--radius);padding:12px 14px;font-size:12px;color:#fbbf24;margin-bottom:14px;line-height:1.5;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="status-bar"></div>
+  <div id="header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon" id="secret-tap" onclick="secretTap()">🎓</div>
+        <div><div class="logo-text">NCL Deals</div><div class="logo-sub">Newcastle student nights out</div></div>
+      </div>
+      <div class="time-badge" id="live-time"></div>
+    </div>
+  </div>
+
+  <div id="scroll-area">
+    <!-- ── DEALS PAGE ── -->
+    <div class="page active" id="page-deals">
+      <div class="install-bar" id="install-prompt" style="display:none;">
+        <div class="install-icon">📲</div>
+        <div class="install-text"><div class="install-title">Add to Home Screen</div><div class="install-sub">Tap <strong>Share</strong> → <strong>Add to Home Screen</strong></div></div>
+        <button class="install-close" onclick="dismissInstall()">×</button>
+      </div>
+      <div class="notif-banner" id="notif-banner" style="display:none;">
+        <div style="font-size:22px;flex-shrink:0;">🔔</div>
+        <div class="notif-text">Get notified when new deals drop tonight</div>
+        <button class="notif-btn" onclick="requestNotifications()">Enable</button>
+        <button class="notif-close" onclick="dismissNotifBanner()">×</button>
+      </div>
+      <div id="tonight-banner"></div>
+      <div class="section-label">Choose your night</div>
+      <div class="day-strip" id="day-strip"></div>
+      <div class="filters" id="filters"></div>
+      <div class="results-bar">
+        <div class="full-day" id="full-day-label"></div>
+        <div class="results-count" id="results-count"></div>
+      </div>
+      <div class="deals-grid" id="deals-grid"></div>
+      <div style="height:20px;flex-shrink:0;"></div>
+    </div>
+
+    <!-- ── VENUE PAGE ── -->
+    <div class="page" id="page-venue">
+      <button class="back-btn" onclick="switchTab('deals')">← Back to deals</button>
+      <div id="venue-content"></div>
+      <div style="height:20px;"></div>
+    </div>
+
+    <!-- ── MAP PAGE ── -->
+    <div class="page" id="page-map">
+      <div class="section-label">Newcastle venues</div>
+      <div class="map-container">
+        <iframe id="map-iframe" src="" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+      <div class="section-label">All venues</div>
+      <div class="map-venue-list" id="map-venue-list"></div>
+      <div style="height:20px;"></div>
+    </div>
+
+    <!-- ── SUBMIT PAGE ── -->
+    <div class="page" id="page-submit">
+      <div class="submit-hero">
+        <div class="submit-hero-icon">🏪</div>
+        <div class="submit-hero-title">List your deal</div>
+        <div class="submit-hero-sub">Venue owner or promoter? Submit your student deal and we'll review and publish it within 24 hours.</div>
+      </div>
+      <div id="submit-form-area"></div>
+      <div style="height:20px;"></div>
+    </div>
+
+    <!-- ── ADMIN PAGE ── -->
+    <div class="page" id="page-admin">
+      <div id="admin-area"></div>
+      <div style="height:20px;"></div>
+    </div>
+  </div>
+
+  <div id="tab-bar">
+    <button class="tab active" id="tab-deals" onclick="switchTab('deals')"><span class="tab-icon">🍺</span><span class="tab-label">Deals</span></button>
+    <button class="tab" id="tab-map" onclick="switchTab('map')"><span class="tab-icon">📍</span><span class="tab-label">Map</span></button>
+    <button class="tab" id="tab-submit" onclick="switchTab('submit')"><span class="tab-icon">📝</span><span class="tab-label">Submit</span></button>
+  </div>
+</div>
+
+<!-- Share modal -->
+<div class="modal-overlay" id="share-modal" onclick="closeModal('share-modal')">
+  <div class="modal-sheet" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><div class="modal-title">Share deal</div><button class="modal-close" onclick="closeModal('share-modal')">×</button></div>
+    <div class="modal-body">
+      <div id="share-deal-preview" style="background:var(--card);border-radius:var(--radius);padding:12px;margin-bottom:16px;font-size:13px;color:var(--muted);line-height:1.5;"></div>
+      <div class="share-grid">
+        <button class="share-btn" onclick="shareVia('whatsapp')"><div class="share-icon" style="background:#25d366">💬</div><span class="share-label">WhatsApp</span></button>
+        <button class="share-btn" onclick="shareVia('instagram')"><div class="share-icon" style="background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)">📸</div><span class="share-label">Instagram</span></button>
+        <button class="share-btn" onclick="shareVia('twitter')"><div class="share-icon" style="background:#000">𝕏</div><span class="share-label">X / Twitter</span></button>
+        <button class="share-btn" onclick="shareVia('copy')"><div class="share-icon" style="background:var(--surface);border:0.5px solid var(--border)">🔗</div><span class="share-label">Copy link</span></button>
+      </div>
+      <button style="width:100%;padding:13px;border-radius:var(--radius-sm);border:none;background:var(--purple);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;" onclick="shareVia('native')">Share via…</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://uyqxegykeyghtwdbaqkd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV5cXhlZ3lrZXlnaHR3ZGJhcWtkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NDk4NzYsImV4cCI6MjA5NjUyNTg3Nn0.JvZ-XRw6gvjdN-7hcc9WD9HPCvLDOYOcxJC9_Z9oQhg';
+// ══════════════════════════════════════════════════════════════
+
+const CONFIGURED = SUPABASE_URL !== 'YOUR_SUPABASE_URL';
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const FULL_DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const COLORS=['#7c3aed','#db2777','#0891b2','#16a34a','#ca8a04','#dc2626'];
+const GRAD={'#7c3aed':'135deg,#4c1d95,#7c3aed','#db2777':'135deg,#831843,#db2777','#0891b2':'135deg,#164e63,#0891b2','#16a34a':'135deg,#14532d,#16a34a','#ca8a04':'135deg,#78350f,#ca8a04','#dc2626':'135deg,#7f1d1d,#dc2626'};
+
+// Venue coordinates for map
+const VENUE_COORDS = {
+  'Holy Hobo':        {lat:54.9778,lng:-1.6053,area:'Osborne Road'},
+  'Bar Blanc':        {lat:54.9780,lng:-1.6055,area:'Osborne Road'},
+  'Osbornes':         {lat:54.9776,lng:-1.6058,area:'Osborne Road'},
+  'Spy Bar':          {lat:54.9782,lng:-1.6051,area:'Osborne Road'},
+  'Jam Jar':          {lat:54.9779,lng:-1.6057,area:'Osborne Road'},
+  'Digital':          {lat:54.9679,lng:-1.6097,area:'City Centre'},
+  'Digital (Think Tank)':{lat:54.9679,lng:-1.6097,area:'City Centre'},
+  'Tup Tup Palace':   {lat:54.9713,lng:-1.6142,area:'City Centre'},
+  'The Points':       {lat:54.9694,lng:-1.6124,area:'City Centre'},
+  'Flares':           {lat:54.9698,lng:-1.6134,area:'City Centre'},
+  'Soho Rooms':       {lat:54.9696,lng:-1.6128,area:'City Centre'},
+  'Cosmic Ballroom':  {lat:54.9702,lng:-1.6138,area:'City Centre'},
+  'Powerhouse':       {lat:54.9687,lng:-1.6105,area:'City Centre'},
+};
+
+let deals=[];
+let session=null;
+let selectedDay=DAYS[getTodayIdx()];
+let catFilter='All';
+let areaFilter='All';
+let adminTab='deals';
+let editingId=null;
+let showAdminForm=false;
+let formData={venue:'',area:'Osborne Road',category:'Bar / Pub',days:[],deal:'',time:'',tag:'',color:'#7c3aed',source:''};
+let submitForm={venue:'',area:'Osborne Road',category:'Bar / Pub',days:[],deal:'',time:'',tag:'',contact:''};
+let submitDone=false;
+let pendingCount=0;
+let shareDeal=null;
+let upvotes={};  // {dealId: count}
+let myUpvotes={}; // {dealId: true}
+let currentVenue=null;
+
+// ── Supabase client ───────────────────────────────────────────
+const sb={
+  headers(extra={}){return{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+(session?.access_token||SUPABASE_ANON_KEY),...extra};},
+  async get(table,query=''){const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`,{headers:sb.headers({'Prefer':'return=representation'})});if(!r.ok)throw new Error(await r.text());return r.json();},
+  async post(table,body){const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}`,{method:'POST',headers:sb.headers({'Prefer':'return=representation'}),body:JSON.stringify(body)});if(!r.ok)throw new Error(await r.text());return r.json();},
+  async patch(table,id,body){const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`,{method:'PATCH',headers:sb.headers({'Prefer':'return=representation'}),body:JSON.stringify(body)});if(!r.ok)throw new Error(await r.text());return r.json();},
+  async del(table,id){const r=await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`,{method:'DELETE',headers:sb.headers()});if(!r.ok)throw new Error(await r.text());},
+  async signIn(email,password){const r=await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY},body:JSON.stringify({email,password})});if(!r.ok)throw new Error('Invalid email or password');return r.json();},
+  async signOut(){if(!session)return;await fetch(`${SUPABASE_URL}/auth/v1/logout`,{method:'POST',headers:sb.headers()});}
+};
+
+// ── Helpers ───────────────────────────────────────────────────
+function getTodayIdx(){const d=new Date().getDay();return d===0?6:d-1;}
+function showToast(msg,ms=3000){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show';setTimeout(()=>t.className='toast',ms);}
+function updateTime(){document.getElementById('live-time').textContent=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
+updateTime();setInterval(updateTime,30000);
+function openModal(id){document.getElementById(id).className='modal-overlay open';}
+function closeModal(id){document.getElementById(id).className='modal-overlay';}
+
+// Load upvotes from localStorage
+try{upvotes=JSON.parse(localStorage.getItem('ncl-upvotes')||'{}');myUpvotes=JSON.parse(localStorage.getItem('ncl-my-upvotes')||'{}');}catch(e){}
+
+// ── Load deals ────────────────────────────────────────────────
+async function loadDeals(){
+  if(!CONFIGURED){deals=FALLBACK_DEALS;renderAll();return;}
+  document.getElementById('deals-grid').innerHTML=`<div class="loading-pulse">${[1,2,3].map(()=>'<div class="skeleton"></div>').join('')}</div>`;
+  try{deals=await sb.get('deals','active=eq.true&order=venue.asc');renderAll();}
+  catch(e){deals=FALLBACK_DEALS;renderAll();showToast('⚠️ Showing cached deals');}
+}
+
+// ── Tonight banner ────────────────────────────────────────────
+function renderBanner(){
+  const todayKey=DAYS[getTodayIdx()];
+  const todayDeals=deals.filter(d=>Array.isArray(d.days)&&d.days.includes(todayKey));
+  const el=document.getElementById('tonight-banner');
+  if(!todayDeals.length){el.innerHTML=`<div style="border-radius:var(--radius-lg);background:var(--surface);border:0.5px solid var(--border);padding:20px;text-align:center;margin-bottom:16px;"><div style="font-size:36px;margin-bottom:8px;">😴</div><div style="font-size:14px;color:var(--muted);">No deals tonight</div></div>`;return;}
+  const hot=todayDeals.find(d=>d.tag==='Free Entry')||todayDeals.find(d=>d.tag&&d.tag.includes('£1'))||todayDeals.find(d=>d.category==='Club')||todayDeals[0];
+  const grad=GRAD[hot.color]||'135deg,#4c1d95,#7c3aed';
+  el.innerHTML=`<div class="tonight-banner" onclick="openVenuePage('${hot.venue.replace(/'/g,"\\'")}')"><div class="banner-bg" style="background:linear-gradient(${grad})"></div><div class="banner-content"><div class="banner-eyebrow"><span class="banner-dot"></span>Tonight's hottest deal${hot.verified?' <span class="verified-badge">✓ Verified</span>':''}</div><div class="banner-venue">${hot.venue}</div><div class="banner-deal">${hot.deal}</div><div class="banner-meta"><span class="banner-tag">${hot.tag}</span><span class="banner-time">🕐 ${hot.time}</span><span class="banner-area">📍 ${hot.area}</span></div><button class="banner-share-btn" onclick="event.stopPropagation();openShare(${JSON.stringify(hot).replace(/"/g,'&quot;')})">Share this deal 🚀</button></div></div>`;
+}
+
+// ── Day strip ─────────────────────────────────────────────────
+function renderDayStrip(){
+  const ti=getTodayIdx();
+  document.getElementById('day-strip').innerHTML=DAYS.map((d,i)=>{
+    const count=deals.filter(x=>Array.isArray(x.days)&&x.days.includes(d)).length;
+    return `<button class="day-btn${d===selectedDay?' selected':''}${i===ti?' today':''}" onclick="selectDay('${d}')"><span class="day-name">${d}</span><span class="day-count">${count}</span></button>`;
+  }).join('');
+}
+
+// ── Filters ───────────────────────────────────────────────────
+function renderFilters(){
+  document.getElementById('filters').innerHTML=[
+    ['All','🍸 All'],['Bar / Pub','🍺 Bars'],['Club','🎵 Clubs']
+  ].map(([v,l])=>`<button class="filter-pill${catFilter===v?' active':''}" onclick="setCat('${v}')">${l}</button>`).join('')+
+  ['Osborne Road','City Centre'].map(a=>`<button class="filter-pill${areaFilter===a?' active':''}" onclick="setArea('${a}')">📍 ${a==='Osborne Road'?'Osborne Rd':'City Centre'}</button>`).join('');
+}
+
+// ── Deals grid ────────────────────────────────────────────────
+function renderDeals(){
+  const filtered=deals.filter(d=>{
+    const days=Array.isArray(d.days)?d.days:[];
+    return days.includes(selectedDay)&&(catFilter==='All'||d.category===catFilter)&&(areaFilter==='All'||d.area===areaFilter);
+  });
+  document.getElementById('full-day-label').textContent=FULL_DAYS[DAYS.indexOf(selectedDay)];
+  document.getElementById('results-count').textContent=`${filtered.length} deal${filtered.length!==1?'s':''}`;
+  if(!filtered.length){document.getElementById('deals-grid').innerHTML=`<div class="empty-state"><span class="empty-emoji">😴</span><div class="empty-title">Nothing on this night</div><div class="empty-sub">Try a different day or filter</div></div>`;return;}
+  document.getElementById('deals-grid').innerHTML=filtered.map(deal=>{
+    const days=Array.isArray(deal.days)?deal.days:[];
+    const votes=(upvotes[deal.id]||0);
+    const voted=!!myUpvotes[deal.id];
+    const dealJson=JSON.stringify(deal).replace(/"/g,'&quot;');
+    return `<div class="deal-card" onclick="openVenuePage('${deal.venue.replace(/'/g,"\\'")}')">
+      <div class="deal-accent" style="background:${deal.color}"></div>
+      <div class="deal-body">
+        <div class="deal-top">
+          <div><div class="deal-venue">${deal.venue}</div><div class="deal-subtitle">📍 ${deal.area} · ${deal.category}</div></div>
+          <span class="deal-tag" style="background:${deal.color}22;color:${deal.color}">${deal.tag}</span>
+        </div>
+        <div class="deal-desc">${deal.deal}</div>
+        <div class="deal-footer">
+          <div class="deal-time">🕐 ${deal.time}</div>
+          <div class="deal-days">${days.map(d=>`<span class="deal-day-pill${d===selectedDay?' current':''}" style="${d===selectedDay?`background:${deal.color}`:''}">${d}</span>`).join('')}</div>
+        </div>
+        ${deal.verified?`<div class="deal-verified">✓ Verified via ${deal.source||'research'}</div>`:''}
+        <div class="deal-actions" onclick="event.stopPropagation()">
+          <button class="deal-action-btn${voted?' upvoted':''}" onclick="toggleUpvote(${deal.id})">
+            👍 <span class="upvote-count">${votes} ${votes===1?'vote':'votes'}</span>
+          </button>
+          <button class="deal-action-btn" onclick="openShare(${dealJson})">🚀 Share</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Upvoting ──────────────────────────────────────────────────
+function toggleUpvote(id){
+  if(myUpvotes[id]){
+    upvotes[id]=Math.max(0,(upvotes[id]||1)-1);
+    delete myUpvotes[id];
+  }else{
+    upvotes[id]=(upvotes[id]||0)+1;
+    myUpvotes[id]=true;
+  }
+  try{localStorage.setItem('ncl-upvotes',JSON.stringify(upvotes));localStorage.setItem('ncl-my-upvotes',JSON.stringify(myUpvotes));}catch(e){}
+  renderDeals();
+}
+
+// ── Share ─────────────────────────────────────────────────────
+function openShare(deal){
+  shareDeal=typeof deal==='string'?JSON.parse(deal):deal;
+  const text=`🍺 ${shareDeal.venue} – ${shareDeal.deal}\n🕐 ${shareDeal.time}\n📍 ${shareDeal.area}\n\nFound on NCL Deals: ${window.location.href}`;
+  document.getElementById('share-deal-preview').innerHTML=`<strong>${shareDeal.venue}</strong><br>${shareDeal.deal}<br><span style="color:var(--muted)">${shareDeal.time} · ${shareDeal.area}</span>`;
+  openModal('share-modal');
+}
+function shareVia(platform){
+  if(!shareDeal)return;
+  const text=encodeURIComponent(`🍺 ${shareDeal.venue} – ${shareDeal.deal}\n🕐 ${shareDeal.time}\n📍 ${shareDeal.area}\n\nNCL Deals: ${window.location.href}`);
+  const urls={
+    whatsapp:`https://wa.me/?text=${text}`,
+    twitter:`https://twitter.com/intent/tweet?text=${text}`,
+    instagram:null,
+  };
+  if(platform==='native'&&navigator.share){
+    navigator.share({title:`${shareDeal.venue} deal`,text:`${shareDeal.venue} – ${shareDeal.deal}\n${shareDeal.time} · ${shareDeal.area}`,url:window.location.href}).catch(()=>{});
+    closeModal('share-modal');return;
+  }
+  if(platform==='copy'){
+    navigator.clipboard?.writeText(`${shareDeal.venue} – ${shareDeal.deal}\n${shareDeal.time} · ${shareDeal.area}\nNCL Deals: ${window.location.href}`).then(()=>showToast('📋 Copied to clipboard!')).catch(()=>showToast('📋 Copy failed'));
+    closeModal('share-modal');return;
+  }
+  if(platform==='instagram'){showToast('📸 Copy the text and paste into your Instagram story!');closeModal('share-modal');return;}
+  const url=urls[platform];
+  if(url)window.open(url,'_blank');
+  closeModal('share-modal');
+}
+
+// ── Venue page ────────────────────────────────────────────────
+function openVenuePage(venueName){
+  currentVenue=venueName;
+  const venueDeals=deals.filter(d=>d.venue===venueName);
+  if(!venueDeals.length)return;
+  const first=venueDeals[0];
+  const grad=GRAD[first.color]||'135deg,#4c1d95,#7c3aed';
+  const allDays=[...new Set(venueDeals.flatMap(d=>Array.isArray(d.days)?d.days:[]))];
+  const totalVotes=venueDeals.reduce((acc,d)=>acc+(upvotes[d.id]||0),0);
+
+  document.getElementById('venue-content').innerHTML=`
+    <div class="venue-hero">
+      <div class="venue-hero-bg" style="background:linear-gradient(${grad})"></div>
+      <div class="venue-hero-body">
+        <div class="venue-hero-name">${venueName}</div>
+        <div class="venue-hero-meta">
+          <span>📍 ${first.area}</span>
+          <span>${first.category}</span>
+          ${allDays.map(d=>`<span>${d}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="venue-stats">
+      <div class="venue-stat"><div class="venue-stat-num">${venueDeals.length}</div><div class="venue-stat-label">Deals</div></div>
+      <div class="venue-stat"><div class="venue-stat-num">${allDays.length}</div><div class="venue-stat-label">Nights</div></div>
+      <div class="venue-stat"><div class="venue-stat-num">${totalVotes}</div><div class="venue-stat-label">Upvotes</div></div>
+    </div>
+    <div class="section-label">All deals at ${venueName}</div>
+    <div class="deals-grid">${venueDeals.map(deal=>{
+      const days=Array.isArray(deal.days)?deal.days:[];
+      const votes=(upvotes[deal.id]||0);
+      const voted=!!myUpvotes[deal.id];
+      const dealJson=JSON.stringify(deal).replace(/"/g,'&quot;');
+      return `<div class="deal-card">
+        <div class="deal-accent" style="background:${deal.color}"></div>
+        <div class="deal-body">
+          <div class="deal-top">
+            <div><div class="deal-venue">${deal.deal}</div><div class="deal-subtitle">🕐 ${deal.time}</div></div>
+            <span class="deal-tag" style="background:${deal.color}22;color:${deal.color}">${deal.tag}</span>
+          </div>
+          <div class="deal-days">${days.map(d=>`<span class="deal-day-pill" style="background:${deal.color}33;color:${deal.color}">${d}</span>`).join('')}</div>
+          <div class="deal-actions" style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border);display:flex;gap:8px;">
+            <button class="deal-action-btn${voted?' upvoted':''}" onclick="toggleUpvote(${deal.id})">👍 ${votes} ${votes===1?'vote':'votes'}</button>
+            <button class="deal-action-btn" onclick="openShare(${dealJson})">🚀 Share</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+
+  switchTab('venue');
+}
+
+// ── Map page ──────────────────────────────────────────────────
+function renderMap(){
+  // Build OpenStreetMap embed centred on Newcastle
+  const mapSrc=`https://www.openstreetmap.org/export/embed.html?bbox=-1.6350%2C54.9620%2C-1.5900%2C54.9850&layer=mapnik&marker=54.9778%2C-1.6053`;
+  document.getElementById('map-iframe').src=mapSrc;
+
+  // Unique venues
+  const venueNames=[...new Set(deals.map(d=>d.venue))].sort();
+  document.getElementById('map-venue-list').innerHTML=venueNames.map(name=>{
+    const vDeals=deals.filter(d=>d.venue===name);
+    const first=vDeals[0];
+    const coords=VENUE_COORDS[name];
+    return `<div class="map-venue-card" onclick="openVenuePage('${name.replace(/'/g,"\\'")}')">
+      <div class="map-venue-dot" style="background:${first.color}"></div>
+      <div style="flex:1">
+        <div class="map-venue-name">${name}</div>
+        <div class="map-venue-area">📍 ${first.area}${coords?` · tap to view deals`:''}</div>
+      </div>
+      <div class="map-venue-count">${vDeals.length} deal${vDeals.length!==1?'s':''}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Push notifications ────────────────────────────────────────
+function showNotifBanner(){
+  if('Notification' in window && Notification.permission==='default' && !localStorage.getItem('ncl-notif-dismissed')){
+    document.getElementById('notif-banner').style.display='flex';
+  }
+}
+function dismissNotifBanner(){
+  document.getElementById('notif-banner').style.display='none';
+  try{localStorage.setItem('ncl-notif-dismissed','1');}catch(e){}
+}
+async function requestNotifications(){
+  if(!('Notification' in window)){showToast('Notifications not supported on this browser');return;}
+  const perm=await Notification.requestPermission();
+  if(perm==='granted'){
+    dismissNotifBanner();
+    showToast('🔔 Notifications enabled! We\'ll alert you when new deals drop.');
+    // Schedule a test notification
+    setTimeout(()=>{
+      const todayDeals=deals.filter(d=>Array.isArray(d.days)&&d.days.includes(DAYS[getTodayIdx()]));
+      if(todayDeals.length){
+        const hot=todayDeals[0];
+        new Notification('NCL Deals tonight 🍺',{body:`${hot.venue}: ${hot.deal}`,icon:'icons/icon-192.png',badge:'icons/icon-192.png'});
+      }
+    },1500);
+  }else{
+    showToast('Notifications blocked — you can enable them in your browser settings');
+    dismissNotifBanner();
+  }
+}
+
+// ── Submit form ───────────────────────────────────────────────
+function renderSubmitForm(){
+  const area=document.getElementById('submit-form-area');
+  if(!CONFIGURED){area.innerHTML=`<div class="setup-warning">⚠️ Supabase not configured yet.</div>`;return;}
+  if(submitDone){area.innerHTML=`<div class="success-card"><span class="success-icon">🎉</span><div class="success-title">Deal submitted!</div><div class="success-sub">We'll review and publish within 24 hours. Thanks!</div></div>`;return;}
+  area.innerHTML=`
+  <div class="form-card">
+    <div class="form-section-title">Venue details</div>
+    <div class="form-grid">
+      <div class="form-full"><label class="form-label">Venue name *</label><input class="form-input" value="${submitForm.venue}" placeholder="e.g. Holy Hobo" oninput="submitForm.venue=this.value"/></div>
+      <div><label class="form-label">Area</label><select class="form-select" onchange="submitForm.area=this.value"><option${submitForm.area==='Osborne Road'?' selected':''}>Osborne Road</option><option${submitForm.area==='City Centre'?' selected':''}>City Centre</option></select></div>
+      <div><label class="form-label">Type</label><select class="form-select" onchange="submitForm.category=this.value"><option${submitForm.category==='Bar / Pub'?' selected':''}>Bar / Pub</option><option${submitForm.category==='Club'?' selected':''}>Club</option></select></div>
+    </div>
+  </div>
+  <div class="form-card">
+    <div class="form-section-title">Deal info</div>
+    <div class="form-grid">
+      <div class="form-full"><label class="form-label">Deal description *</label><textarea class="form-textarea" placeholder="e.g. 2-for-1 on all cocktails" oninput="submitForm.deal=this.value">${submitForm.deal}</textarea></div>
+      <div><label class="form-label">Time</label><input class="form-input" value="${submitForm.time}" placeholder="e.g. 8pm – 11pm" oninput="submitForm.time=this.value"/></div>
+      <div><label class="form-label">Tag</label><input class="form-input" value="${submitForm.tag}" placeholder="e.g. Free Entry" oninput="submitForm.tag=this.value"/></div>
+      <div class="form-full"><label class="form-label">Which days? *</label><div class="day-toggles">${DAYS.map(d=>`<button class="day-toggle${submitForm.days.includes(d)?' on':''}" onclick="toggleSubmitDay('${d}')">${d}</button>`).join('')}</div></div>
+    </div>
+  </div>
+  <div class="form-card">
+    <div class="form-section-title">Your contact (private)</div>
+    <div><label class="form-label">Email</label><input class="form-input" type="email" value="${submitForm.contact}" placeholder="venue@example.com" oninput="submitForm.contact=this.value"/></div>
+  </div>
+  <button class="submit-btn" onclick="doSubmit()">Submit deal for review</button>`;
+}
+async function doSubmit(){
+  if(!submitForm.venue||!submitForm.deal||!submitForm.days.length){showToast('Fill in venue, deal, and at least one day');return;}
+  const btn=document.querySelector('.submit-btn');
+  if(btn){btn.disabled=true;btn.textContent='Submitting...';}
+  try{
+    await sb.post('submissions',{venue:submitForm.venue,area:submitForm.area,category:submitForm.category,days:submitForm.days,deal:submitForm.deal,time:submitForm.time,tag:submitForm.tag||'Deal',contact:submitForm.contact,status:'pending'});
+    submitDone=true;renderSubmitForm();
+  }catch(e){showToast('Failed to submit. Please try again.');if(btn){btn.disabled=false;btn.textContent='Submit deal for review';}}
+}
+function toggleSubmitDay(d){submitForm.days=submitForm.days.includes(d)?submitForm.days.filter(x=>x!==d):[...submitForm.days,d];renderSubmitForm();}
+
+// ── Admin ─────────────────────────────────────────────────────
+async function renderAdmin(){
+  const area=document.getElementById('admin-area');
+  if(!CONFIGURED){area.innerHTML=`<div class="setup-warning">⚠️ Add Supabase credentials to enable admin.</div>`;return;}
+  if(!session){
+    area.innerHTML=`<div class="login-card"><div class="login-title">Admin login</div><div class="login-sub">Sign in to manage deals.</div><div style="margin-bottom:10px;"><label class="form-label">Email</label><input class="form-input" id="admin-email" type="email" placeholder="admin@example.com"/></div><div style="margin-bottom:14px;"><label class="form-label">Password</label><input class="form-input" id="admin-pw" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()"/></div><button class="login-btn" onclick="adminLogin()">Sign in</button></div>`;
+    return;
+  }
+  let pending=[];
+  try{pending=await sb.get('submissions','status=eq.pending&order=created_at.asc');}catch(e){}
+  pendingCount=pending.length;
+  // Update badge
+  const tabEl=document.getElementById('tab-admin');
+  if(tabEl){const existing=tabEl.querySelector('.tab-badge');if(existing)existing.remove();if(pendingCount>0){const b=document.createElement('span');b.className='tab-badge';b.textContent=pendingCount;tabEl.appendChild(b);}}
+
+  area.innerHTML=`
+  <div class="admin-header">
+    <div><div class="admin-title">Admin</div><div class="admin-sub">${deals.length} live deals</div></div>
+    <button class="logout-btn" onclick="adminLogout()">Sign out</button>
+  </div>
+  <div class="admin-tabs">
+    <button class="admin-tab${adminTab==='deals'?' active':''}" onclick="setAdminTab('deals')">Live deals</button>
+    <button class="admin-tab${adminTab==='pending'?' active':''}" onclick="setAdminTab('pending')">Pending${pendingCount>0?`<span class="badge">${pendingCount}</span>`:''}</button>
+  </div>
+  <div id="admin-tab-content"></div>`;
+  adminTab==='deals'?renderAdminDeals():renderPending(pending);
+}
+
+function renderAdminDeals(){
+  const el=document.getElementById('admin-tab-content');if(!el)return;
+  let html=`<button style="width:100%;padding:12px;border-radius:var(--radius-sm);border:none;background:var(--purple);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;" onclick="openAdminForm(null)">+ Add new deal</button>`;
+  if(showAdminForm)html+=renderAdminFormHTML();
+  html+=`<div class="admin-list">${deals.map(d=>`<div class="admin-row"><div class="admin-accent" style="background:${d.color}"></div><div class="admin-info"><div class="admin-venue-name">${d.venue} <span style="color:var(--muted);font-weight:400;font-size:11px">— ${d.area}</span></div><div class="admin-deal-text">${d.deal}</div><div class="admin-days-row">${(Array.isArray(d.days)?d.days:[]).map(x=>`<span class="admin-day-chip">${x}</span>`).join('')}</div></div><div class="admin-btns"><button class="edit-btn" onclick="openAdminForm(${d.id})">Edit</button><button class="delete-btn" onclick="adminDelete(${d.id})">Del</button></div></div>`).join('')}</div>`;
+  el.innerHTML=html;
+}
+function renderAdminFormHTML(){
+  return `<div class="admin-form-card"><div style="font-size:15px;font-weight:700;margin-bottom:14px;">${editingId?'Edit deal':'New deal'}</div><div class="form-grid"><div><label class="form-label">Venue *</label><input class="form-input" id="af-venue" value="${formData.venue}" placeholder="Venue name" oninput="formData.venue=this.value"/></div><div><label class="form-label">Area</label><select class="form-select" onchange="formData.area=this.value"><option${formData.area==='Osborne Road'?' selected':''}>Osborne Road</option><option${formData.area==='City Centre'?' selected':''}>City Centre</option></select></div><div><label class="form-label">Category</label><select class="form-select" onchange="formData.category=this.value"><option${formData.category==='Bar / Pub'?' selected':''}>Bar / Pub</option><option${formData.category==='Club'?' selected':''}>Club</option></select></div><div><label class="form-label">Time</label><input class="form-input" value="${formData.time}" placeholder="e.g. 9pm–3am" oninput="formData.time=this.value"/></div><div class="form-full"><label class="form-label">Deal *</label><input class="form-input" value="${formData.deal}" placeholder="Describe the deal" oninput="formData.deal=this.value"/></div><div><label class="form-label">Tag</label><input class="form-input" value="${formData.tag}" placeholder="e.g. Free Entry" oninput="formData.tag=this.value"/></div><div><label class="form-label">Source</label><input class="form-input" value="${formData.source||''}" placeholder="e.g. venue website" oninput="formData.source=this.value"/></div><div class="form-full"><label class="form-label">Colour</label><div class="color-swatches">${COLORS.map(c=>`<div class="swatch${formData.color===c?' active':''}" style="background:${c}" onclick="setAdminColor('${c}')"></div>`).join('')}</div></div><div class="form-full"><label class="form-label">Days *</label><div class="day-toggles">${DAYS.map(d=>`<button class="day-toggle${formData.days.includes(d)?' on':''}" onclick="toggleAdminDay('${d}')">${d}</button>`).join('')}</div></div></div><div class="form-actions"><button class="save-btn" id="save-btn" onclick="adminSave()">${editingId?'Save changes':'Add deal'}</button><button class="cancel-btn" onclick="cancelAdminForm()">Cancel</button></div></div>`;
+}
+function renderPending(pending){
+  const el=document.getElementById('admin-tab-content');if(!el)return;
+  if(!pending.length){el.innerHTML=`<div class="empty-state"><span class="empty-emoji">✅</span><div class="empty-title">No pending submissions</div></div>`;return;}
+  el.innerHTML=pending.map(p=>`<div class="pending-card"><div class="pending-venue">${p.venue}</div><div class="pending-deal">${p.deal}</div><div class="pending-meta"><span class="pending-chip">📍 ${p.area}</span><span class="pending-chip">${p.category}</span><span class="pending-chip">🕐 ${p.time||'–'}</span>${(Array.isArray(p.days)?p.days:[]).map(d=>`<span class="pending-chip">${d}</span>`).join('')}</div><div class="pending-actions"><button class="approve-btn" onclick="approveSubmission(${p.id},'${(p.venue||'').replace(/'/g,"\\'")}','${p.area}','${p.category}',${JSON.stringify(p.days).replace(/"/g,"'")},'${(p.deal||'').replace(/'/g,"\\'")}','${p.time||''}','${p.tag||'Deal'}')">✓ Approve</button><button class="reject-btn" onclick="rejectSubmission(${p.id})">✕ Reject</button></div></div>`).join('');
+}
+async function approveSubmission(id,venue,area,category,days,deal,time,tag){
+  try{
+    await sb.patch('submissions',id,{status:'approved'});
+    const daysArr=Array.isArray(days)?days:(typeof days==='string'?days.replace(/['\[\]]/g,'').split(',').map(s=>s.trim()):[] );
+    const newDeal=await sb.post('deals',{venue,area,category,days:daysArr,deal,time,tag,color:'#7c3aed',verified:false,active:true});
+    deals=[...deals,...(Array.isArray(newDeal)?newDeal:[newDeal])];
+    showToast('✅ Deal approved and published!');renderAll();renderAdmin();
+  }catch(e){showToast('Failed: '+e.message);}
+}
+async function rejectSubmission(id){try{await sb.patch('submissions',id,{status:'rejected'});showToast('Submission rejected');renderAdmin();}catch(e){showToast('Failed: '+e.message);}}
+async function adminLogin(){
+  const email=document.getElementById('admin-email')?.value;const pw=document.getElementById('admin-pw')?.value;
+  if(!email||!pw){showToast('Enter email and password');return;}
+  try{session=await sb.signIn(email,pw);await loadDeals();renderAdmin();}catch(e){showToast('Login failed: '+e.message);}
+}
+async function adminLogout(){await sb.signOut();session=null;renderAdmin();}
+function openAdminForm(id){
+  if(id===null){editingId=null;formData={venue:'',area:'Osborne Road',category:'Bar / Pub',days:[],deal:'',time:'',tag:'',color:'#7c3aed',source:''};}
+  else{const d=deals.find(x=>x.id===id);editingId=id;formData={...d,days:Array.isArray(d.days)?[...d.days]:[]};}
+  showAdminForm=true;renderAdminDeals();
+  document.querySelector('.admin-form-card')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function cancelAdminForm(){showAdminForm=false;editingId=null;renderAdminDeals();}
+function setAdminColor(c){formData.color=c;if(showAdminForm)renderAdminDeals();}
+function toggleAdminDay(d){formData.days=formData.days.includes(d)?formData.days.filter(x=>x!==d):[...formData.days,d];if(showAdminForm)renderAdminDeals();}
+function setAdminTab(t){adminTab=t;renderAdmin();}
+async function adminSave(){
+  if(!formData.venue||!formData.deal||!formData.days.length){showToast('Fill in venue, deal, and days');return;}
+  const btn=document.getElementById('save-btn');if(btn){btn.disabled=true;btn.textContent='Saving...';}
+  try{
+    if(editingId!==null){const u=await sb.patch('deals',editingId,{...formData});deals=deals.map(d=>d.id===editingId?(Array.isArray(u)?u[0]:u):d);}
+    else{const c=await sb.post('deals',{...formData,active:true});deals=[...deals,...(Array.isArray(c)?c:[c])];}
+    showAdminForm=false;editingId=null;renderAll();renderAdmin();
+  }catch(e){showToast('Save failed: '+e.message);if(btn){btn.disabled=false;btn.textContent=editingId?'Save changes':'Add deal';}}
+}
+async function adminDelete(id){try{await sb.del('deals',id);deals=deals.filter(d=>d.id!==id);renderAll();renderAdmin();}catch(e){showToast('Delete failed: '+e.message);}}
+
+// ── Tab switching ─────────────────────────────────────────────
+function switchTab(t){
+  const allTabs=['deals','venue','map','submit','admin'];
+  allTabs.forEach(n=>{
+    const pg=document.getElementById(`page-${n}`);if(pg)pg.className='page'+(t===n?' active':'');
+    const tb=document.getElementById(`tab-${n}`);if(tb)tb.className='tab'+(t===n?' active':'');
+  });
+  document.getElementById('scroll-area').scrollTo(0,0);
+  if(t==='submit')renderSubmitForm();
+  if(t==='admin')renderAdmin();
+  if(t==='map')renderMap();
+}
+function selectDay(d){selectedDay=d;renderDayStrip();renderDeals();}
+function setCat(c){catFilter=c;renderFilters();renderDeals();}
+function setArea(a){areaFilter=a;renderFilters();renderDeals();}
+
+// ── iOS install prompt ────────────────────────────────────────
+function showInstallPrompt(){
+  if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.navigator.standalone&&!localStorage.getItem('ncl-install-dismissed')){
+    document.getElementById('install-prompt').style.display='flex';
+  }
+}
+function dismissInstall(){document.getElementById('install-prompt').style.display='none';try{localStorage.setItem('ncl-install-dismissed','1');}catch(e){}}
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+
+    // Check for updates every time the app is opened / tab gets focus
+    reg.update();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') reg.update();
+    });
+
+    // When a new SW is waiting, tell it to take over then silently reload
+    reg.addEventListener('updatefound', () => {
+      const newSW = reg.installing;
+      newSW.addEventListener('statechange', () => {
+        if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+          // New version ready — skip waiting and reload
+          newSW.postMessage('skipWaiting');
+        }
+      });
+    });
+
+    // When SW has taken control, reload the page to get new assets
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+
+  }).catch(() => {});
+}
+
+function renderAll(){renderBanner();renderDayStrip();renderFilters();renderDeals();}
+
+// ── Fallback data ─────────────────────────────────────────────
+const FALLBACK_DEALS=[
+  {id:1,venue:'Holy Hobo',area:'Osborne Road',category:'Bar / Pub',days:['Tue'],deal:'Twosday Tuesday: 2-for-1 on everything all night',time:'3pm – 2am',tag:'2-4-1 All Night',color:'#7c3aed',verified:true,source:'Skiddle'},
+  {id:2,venue:'Bar Blanc',area:'Osborne Road',category:'Bar / Pub',days:['Tue'],deal:'£2 Tuesdays – cheap drinks all night + Big Red Button',time:'5pm – late',tag:'£2 Drinks',color:'#db2777',verified:true,source:'The Tab'},
+  {id:3,venue:'Bar Blanc',area:'Osborne Road',category:'Bar / Pub',days:['Thu'],deal:'2-for-1 cocktails all evening',time:'5pm – 7pm',tag:'Cocktails',color:'#db2777',verified:true,source:'Skiddle'},
+  {id:4,venue:'Osbornes',area:'Osborne Road',category:'Bar / Pub',days:['Tue'],deal:'£2 Tuesday on selected pints',time:'From 5pm',tag:'£2 Pints',color:'#0891b2',verified:true,source:'High Life North'},
+  {id:5,venue:'Spy Bar',area:'Osborne Road',category:'Bar / Pub',days:['Tue'],deal:'Half-price burgers all day',time:'All day',tag:'Food Deal',color:'#ca8a04',verified:true,source:'High Life North'},
+  {id:6,venue:'Jam Jar',area:'Osborne Road',category:'Bar / Pub',days:['Mon','Tue','Wed','Sun'],deal:'Big Red Button: win 10%, 25%, half price or a free round',time:'4pm–7pm + 9pm–10pm',tag:'Happy Hour',color:'#16a34a',verified:true,source:'The Tab'},
+  {id:7,venue:'Digital',area:'City Centre',category:'Club',days:['Mon'],deal:'Digital Mondays – 4 rooms of anthems',time:'10pm – 4am',tag:'Student Night',color:'#7c3aed',verified:true,source:'Skiddle'},
+  {id:8,venue:'Digital (Think Tank)',area:'City Centre',category:'Club',days:['Fri'],deal:'Feral Fridays – 3x Trebles £7.50, 4x J-Bombs £10, £3 VKs',time:'10pm – 4am',tag:'Feral Friday',color:'#7c3aed',verified:true,source:'Digital / Fatsoma'},
+  {id:9,venue:'Tup Tup Palace',area:'City Centre',category:'Club',days:['Wed'],deal:"Playground Wednesdays – Newcastle's rowdiest student night since 2001",time:'10pm – 3am',tag:'Playground',color:'#db2777',verified:true,source:'Skiddle'},
+  {id:10,venue:'The Points',area:'City Centre',category:'Club',days:['Thu'],deal:'Skint – £1 tickets, £1 Sourz, 3x Trebles £9.50',time:'10pm – 3am',tag:'£1 Drinks',color:'#16a34a',verified:true,source:'Fatsoma'},
+  {id:11,venue:'Flares',area:'City Centre',category:'Club',days:['Wed','Thu','Fri'],deal:'Retro 70s student nights – free entry, cheap drinks',time:'9pm – late',tag:'Free Entry',color:'#ca8a04',verified:true,source:'Skiddle'},
+  {id:12,venue:'Soho Rooms',area:'City Centre',category:'Club',days:['Fri','Sat'],deal:'Famous Toon Trebs (3x vodka + mixer), 4 rooms of music',time:'10pm – 4am',tag:'Trebles',color:'#db2777',verified:true,source:'The Tab'},
+  {id:13,venue:'Cosmic Ballroom',area:'City Centre',category:'Club',days:['Wed','Thu'],deal:'Weekly student nights – trance, techno & house',time:'10pm – 4am',tag:'Student Night',color:'#0891b2',verified:true,source:'Skiddle'},
+  {id:14,venue:'Powerhouse',area:'City Centre',category:'Club',days:['Sat'],deal:'PHUK Super Saturdays – 4 floors, open til 5am, Co2 cannons',time:'10pm – 5am',tag:'Open til 5am',color:'#dc2626',verified:true,source:'Skiddle'},
+];
+
+
+// ── Secret admin access (tap logo 5 times) ───────────────────
+let secretTapCount=0;
+let secretTapTimer=null;
+function secretTap(){
+  secretTapCount++;
+  clearTimeout(secretTapTimer);
+  if(secretTapCount>=5){
+    secretTapCount=0;
+    switchTab('admin');
+    showToast('🔐 Admin panel opened');
+    return;
+  }
+  // Visual feedback on logo
+  const logo=document.getElementById('secret-tap');
+  logo.style.transform='scale(1.3)';
+  setTimeout(()=>logo.style.transform='',150);
+  // Show subtle hint after 2nd tap
+  if(secretTapCount===2) showToast(`Tap ${5-secretTapCount} more times…`);
+  secretTapTimer=setTimeout(()=>secretTapCount=0, 1500);
+}
+
+// ── Init ──────────────────────────────────────────────────────
+loadDeals();
+showInstallPrompt();
+setTimeout(showNotifBanner, 3000);
+</script>
+</body>
+</html>
