@@ -4,7 +4,7 @@
 //  The app will silently update itself in the background and
 //  reload automatically — no action needed from students.
 // ─────────────────────────────────────────────────────────────
-const VERSION = "ncl-deals-20260608230646";
+const VERSION = "ncl-deals-20260608233135";
 const ASSETS  = ["/", "/index.html", "/manifest.json"];
 
 // ── Install: cache assets, activate immediately ──────────────
